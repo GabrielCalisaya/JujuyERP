@@ -18,9 +18,10 @@ public class ProductoConfiguration : IEntityTypeConfiguration<Producto>
 
         // Índice compuesto: un código de barras es único DENTRO de cada tenant,
         // pero dos tenants distintos pueden tener el mismo código EAN.
+        // Sintaxis de filtro compatible con SQLite (sin corchetes de SQL Server).
         builder.HasIndex(p => new { p.TenantId, p.CodigoBarras })
             .IsUnique()
-            .HasFilter("[CodigoBarras] IS NOT NULL");
+            .HasFilter("\"CodigoBarras\" IS NOT NULL");
 
         builder.Property(p => p.Nombre)
             .IsRequired()

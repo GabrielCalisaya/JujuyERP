@@ -35,13 +35,12 @@ public class TenantConfiguration : IEntityTypeConfiguration<Tenant>
             .HasConversion<string>()
             .HasMaxLength(20);
 
-        // ModulosActivosConfig se mapea como NVARCHAR(MAX) para JSON flexible
+        // TEXT es el tipo nativo de SQLite para cadenas largas (equivalente a NVARCHAR(MAX))
         builder.Property(t => t.ModulosActivosConfig)
-            .HasColumnType("nvarchar(max)")
             .HasDefaultValue("{}");
 
         builder.Property(t => t.FechaRegistro)
-            .HasDefaultValueSql("GETUTCDATE()");
+            .HasDefaultValueSql("datetime('now')");
 
         builder.HasMany(t => t.Productos)
             .WithOne(p => p.Tenant)

@@ -7,17 +7,25 @@ using Microsoft.EntityFrameworkCore;
 namespace JujuyERP.Infrastructure.Persistence;
 
 /// <summary>
-/// DbContext central de la aplicación. Implementa tres responsabilidades críticas:
+/// DbContext central de la aplicación.
 ///
-/// 1. MULTI-TENANCY TRANSPARENTE: Aplica Global Query Filters automáticamente a
-///    todas las entidades que implementen IMustHaveTenant. El desarrollador nunca
-///    necesita escribir ".Where(x => x.TenantId == currentTenantId)" manualmente.
+/// CORRECCIÓN DE ARQUITECTURA — Global Query Filters y captura de closure:
+/// El modelo de EF Core se construye UNA sola vez y se cachea para toda la
+/// vida de la aplicación. Las lambdas de HasQueryFilter se compilan con ese
+/// modelo y se re-evalúan en cada query. Por eso es CRÍTICO que la lambda
+/// capture 'this' (la instancia del DbContext del request actual), NO una
+/// referencia externa al ITenantProvider.
 ///
-/// 2. INYECCIÓN AUTOMÁTICA DE TenantId: Intercepta SaveChanges para asignar el
-///    TenantId del contexto actual a las nuevas entidades antes de persistirlas.
+/// INCORRECTO (bug de aislamiento):
+///   static void Filter(ModelBuilder mb, ITenantProvider p)
+///     => mb.Entity<T>().HasQueryFilter(e => e.TenantId == p.TryGetTenantId());
+///   // 'p' queda congelado en la primera instancia creada.
 ///
-/// 3. AUDITORÍA AUTOMÁTICA: Asigna FechaCreacion/FechaModificacion en cada save,
-///    eliminando la responsabilidad de los controladores y comandos CQRS.
+/// CORRECTO:
+///   private void FilterGeneric<T>(ModelBuilder mb)
+///     => mb.Entity<T>().HasQueryFilter(e => e.TenantId == _tenantProvider.TryGetTenantId());
+///   // '_tenantProvider' resuelve 'this' — y 'this' es Scoped, por lo que
+///   // EF Core siempre lee el TenantId del usuario del request en curso.
 /// </summary>
 public class ApplicationDbContext : DbContext, IApplicationDbContext
 {
@@ -37,25 +45,20 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // Carga automáticamente todas las clases IEntityTypeConfiguration<T>
-        // del assembly de Infrastructure. Al agregar nuevas entidades, solo
-        // creas su Configuration; no necesitas modificar este método.
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
-
-        // ── GLOBAL QUERY FILTERS ─────────────────────────────────────────────
-        // Iteramos sobre todos los tipos de entidad del modelo y aplicamos
-        // el filtro de tenant SOLO a las que implementan IMustHaveTenant.
-        // Esto es seguro, extensible y no rompe si se agrega un nuevo módulo.
         ApplyGlobalTenantFilters(modelBuilder);
-
         base.OnModelCreating(modelBuilder);
     }
 
     /// <summary>
-    /// Aplica HasQueryFilter dinámicamente a cada entidad que implemente IMustHaveTenant.
-    /// DECISIÓN: Usamos reflexión con expresiones lambda compiladas para construir el
-    /// filtro en tiempo de inicialización. El costo de reflexión se paga UNA sola vez
-    /// al arrancar la app (EF Core cachea el modelo), no en cada consulta.
+    /// Itera los tipos del modelo y aplica HasQueryFilter a cada entidad
+    /// que implemente IMustHaveTenant usando un método de INSTANCIA genérico.
+    ///
+    /// Al ser un método de instancia, la lambda resultante captura 'this'.
+    /// EF Core re-evalúa 'this._tenantProvider.TryGetTenantId()' en cada query,
+    /// usando la instancia Scoped del DbContext del request en curso.
+    /// El costo de reflexión es O(número de entidades) y se paga solo al
+    /// construir el modelo la primera vez (arranque de la app).
     /// </summary>
     private void ApplyGlobalTenantFilters(ModelBuilder modelBuilder)
     {
@@ -66,22 +69,34 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
             if (!tenantInterface.IsAssignableFrom(entityType.ClrType))
                 continue;
 
-            // Construimos: e => e.TenantId == _tenantProvider.TryGetTenantId()
-            // Usamos el método de extensión genérico definido abajo.
-            modelBuilder.SetTenantFilter(entityType.ClrType, _tenantProvider);
+            // Invocamos el método de instancia genérico con el tipo concreto.
+            // La lambda dentro de ese método captura 'this' automáticamente.
+            typeof(ApplicationDbContext)
+                .GetMethod(nameof(ApplyTenantFilterForEntity),
+                           BindingFlags.NonPublic | BindingFlags.Instance)!
+                .MakeGenericMethod(entityType.ClrType)
+                .Invoke(this, [modelBuilder]);
         }
     }
 
-    // ── INTERCEPCIÓN DE SaveChanges ──────────────────────────────────────────
+    /// <summary>
+    /// Registra el HasQueryFilter para la entidad T.
+    /// La lambda '_tenantProvider.TryGetTenantId()' captura 'this' implícitamente
+    /// (accede al campo privado de la instancia), lo cual es la clave del correcto
+    /// aislamiento multi-tenant por request.
+    /// </summary>
+    private void ApplyTenantFilterForEntity<T>(ModelBuilder modelBuilder)
+        where T : class, IMustHaveTenant
+    {
+        modelBuilder.Entity<T>().HasQueryFilter(e =>
+            _tenantProvider.TryGetTenantId() == null
+            || e.TenantId == _tenantProvider.TryGetTenantId()!.Value);
+    }
+
+    // ── Intercepción de SaveChanges ──────────────────────────────────────────
 
     /// <summary>
-    /// Antes de persistir, inyecta automáticamente:
-    /// - TenantId a entidades nuevas que implementen IMustHaveTenant
-    /// - Timestamps de auditoría a entidades que extiendan AuditableEntity
-    ///
-    /// DECISIÓN: Centralizar esta lógica aquí garantiza que NUNCA se escape
-    /// un registro sin TenantId, independientemente de qué capa cree la entidad.
-    /// Es la "última línea de defensa" del aislamiento multi-tenant.
+    /// Antes de persistir inyecta TenantId (si vacío) y timestamps de auditoría.
     /// </summary>
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
@@ -90,22 +105,18 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
 
         foreach (var entry in ChangeTracker.Entries())
         {
-            // ── Inyección de TenantId ────────────────────────────────────────
             if (entry.Entity is IMustHaveTenant tenantEntity
-                && entry.State == EntityState.Added)
+                && entry.State == EntityState.Added
+                && tenantEntity.TenantId == Guid.Empty)
             {
-                if (tenantEntity.TenantId == Guid.Empty)
-                {
-                    if (!currentTenantId.HasValue)
-                        throw new InvalidOperationException(
-                            $"No se puede persistir '{entry.Entity.GetType().Name}' sin un TenantId válido. " +
-                            "Asegúrese de que la solicitud esté autenticada con un token JWT válido.");
+                if (!currentTenantId.HasValue)
+                    throw new InvalidOperationException(
+                        $"No se puede persistir '{entry.Entity.GetType().Name}' sin TenantId. " +
+                        "La solicitud debe estar autenticada con un JWT válido.");
 
-                    tenantEntity.TenantId = currentTenantId.Value;
-                }
+                tenantEntity.TenantId = currentTenantId.Value;
             }
 
-            // ── Auditoría automática ─────────────────────────────────────────
             if (entry.Entity is AuditableEntity auditable)
             {
                 switch (entry.State)
@@ -113,10 +124,8 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
                     case EntityState.Added:
                         auditable.FechaCreacion = utcNow;
                         break;
-
                     case EntityState.Modified:
                         auditable.FechaModificacion = utcNow;
-                        // Evitamos que EF Core marque FechaCreacion como modified
                         entry.Property(nameof(AuditableEntity.FechaCreacion)).IsModified = false;
                         break;
                 }
@@ -126,10 +135,6 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
         return await base.SaveChangesAsync(cancellationToken);
     }
 
-    /// <summary>
-    /// Sobrecarga síncrona para mantener consistencia si alguien usa SaveChanges().
-    /// En una app async-first como esta, siempre preferir SaveChangesAsync.
-    /// </summary>
     public override int SaveChanges()
         => SaveChangesAsync().GetAwaiter().GetResult();
 }
