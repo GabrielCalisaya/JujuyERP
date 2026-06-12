@@ -1,11 +1,12 @@
 using System.Text;
+using JujuyERP.Application;
 using JujuyERP.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ── Capas de Clean Architecture ──────────────────────────────────────────────
+builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
 // ── Controllers ──────────────────────────────────────────────────────────────
