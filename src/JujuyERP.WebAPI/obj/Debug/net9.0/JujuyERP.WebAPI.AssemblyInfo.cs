@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("JujuyERP.WebAPI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3c8a673f27f826a5456f652944ba33ac7e08aa28")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a48a447c158300d61373afd6aba697576a521af3")]
 [assembly: System.Reflection.AssemblyProductAttribute("JujuyERP.WebAPI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("JujuyERP.WebAPI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
