@@ -15,7 +15,7 @@ public class ActualizarPreciosMasivoCommandHandler : IRequestHandler<ActualizarP
 
     public async Task<int> Handle(ActualizarPreciosMasivoCommand request, CancellationToken cancellationToken)
     {
-        var factor = 1 + (request.PorcentajeAumento / 100m);
+        var porcentaje = (double)request.PorcentajeAumento;
 
         var query = _context.Productos.Where(p => p.Activo);
 
@@ -26,7 +26,9 @@ public class ActualizarPreciosMasivoCommandHandler : IRequestHandler<ActualizarP
             query = query.Where(p => p.Descripcion != null && p.Descripcion.Contains(request.Proveedor));
 
         return await query.ExecuteUpdateAsync(
-            setters => setters.SetProperty(p => p.PrecioVenta, p => Math.Round(p.PrecioVenta * factor, 2)),
+            setters => setters.SetProperty(
+                p => p.PrecioVenta,
+                p => p.PrecioVenta * (decimal)(1.0 + porcentaje / 100.0)),
             cancellationToken);
     }
 }

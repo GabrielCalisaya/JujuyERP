@@ -58,7 +58,7 @@ interface Producto {
             </p>
           </div>
           <div class="flex items-center gap-3">
-            <button (click)="mostrarModal.set(true)"
+            <button (click)="abrirModalNuevo()"
               class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold
                      bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white
                      shadow-md shadow-indigo-200 transition-all duration-200">
@@ -131,11 +131,12 @@ interface Producto {
                     <th class="text-right px-5 py-3.5 font-semibold text-slate-500 text-xs uppercase tracking-wide whitespace-nowrap">Costo</th>
                     <th class="text-right px-5 py-3.5 font-semibold text-slate-500 text-xs uppercase tracking-wide whitespace-nowrap">Precio Venta</th>
                     <th class="text-right px-5 py-3.5 font-semibold text-slate-500 text-xs uppercase tracking-wide whitespace-nowrap">Stock</th>
+                    <th class="px-5 py-3.5"></th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                   @for (p of productos(); track p.id) {
-                    <tr class="hover:bg-slate-50/70 transition-colors">
+                    <tr class="hover:bg-slate-50/70 transition-colors group">
                       <td class="px-5 py-4 text-slate-400 font-mono text-xs whitespace-nowrap">{{ p.codigoBarras ?? '—' }}</td>
                       <td class="px-5 py-4 font-medium text-slate-800">{{ p.nombre }}</td>
                       <td class="px-5 py-4 text-slate-500 hidden lg:table-cell max-w-xs truncate">{{ p.descripcion ?? '—' }}</td>
@@ -151,6 +152,24 @@ interface Producto {
                           : 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700'">
                           {{ p.stockActual }}
                         </span>
+                      </td>
+                      <td class="px-4 py-4 whitespace-nowrap">
+                        <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button (click)="abrirModalEditar(p)" title="Editar"
+                            class="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                            </svg>
+                          </button>
+                          <button (click)="eliminarProducto(p)" title="Eliminar"
+                            class="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   }
@@ -173,7 +192,9 @@ interface Producto {
              (click)="$event.stopPropagation()">
 
           <div class="flex items-center justify-between px-6 py-5 border-b border-slate-100">
-            <h3 class="text-base font-bold text-slate-800">Nuevo Producto</h3>
+            <h3 class="text-base font-bold text-slate-800">
+              {{ modoEdicion() ? 'Editar Producto' : 'Nuevo Producto' }}
+            </h3>
             <button (click)="cerrarModal()"
               class="w-8 h-8 flex items-center justify-center rounded-full text-slate-400
                      hover:text-slate-600 hover:bg-slate-100 transition-colors">
@@ -230,7 +251,7 @@ interface Producto {
                 <input type="number" formControlName="stockActual" placeholder="0" min="0"
                   [class]="inputClass('stockActual')"/>
                 @if (invalid('stockActual')) {
-                  <p class="text-xs text-red-500">Ingresá el stock inicial.</p>
+                  <p class="text-xs text-red-500">Ingresá el stock.</p>
                 }
               </div>
 
@@ -268,7 +289,7 @@ interface Producto {
                   </svg>
                   Guardando...
                 } @else {
-                  Guardar Producto
+                  {{ modoEdicion() ? 'Guardar Cambios' : 'Crear Producto' }}
                 }
               </button>
             </div>
@@ -298,9 +319,12 @@ export class ProductosComponent implements OnInit {
   actualizando = signal(false);
   guardando    = signal(false);
   mostrarModal = signal(false);
+  modoEdicion  = signal(false);
   errorMsg     = signal('');
   successMsg   = signal('');
   errorGuardar = signal('');
+
+  private productoEditandoId = signal<string | null>(null);
 
   productoForm = this.fb.nonNullable.group({
     codigoBarras: [''],
@@ -325,6 +349,30 @@ export class ProductosComponent implements OnInit {
     });
   }
 
+  abrirModalNuevo(): void {
+    this.modoEdicion.set(false);
+    this.productoEditandoId.set(null);
+    this.productoForm.reset({ precioVenta: 0, costo: 0, stockActual: 0, stockMinimo: 0 });
+    this.errorGuardar.set('');
+    this.mostrarModal.set(true);
+  }
+
+  abrirModalEditar(p: Producto): void {
+    this.modoEdicion.set(true);
+    this.productoEditandoId.set(p.id);
+    this.productoForm.setValue({
+      codigoBarras: p.codigoBarras ?? '',
+      nombre:       p.nombre,
+      descripcion:  p.descripcion ?? '',
+      precioVenta:  p.precioVenta,
+      costo:        p.costo,
+      stockActual:  p.stockActual,
+      stockMinimo:  p.stockMinimo
+    });
+    this.errorGuardar.set('');
+    this.mostrarModal.set(true);
+  }
+
   guardarProducto(): void {
     if (this.productoForm.invalid) {
       this.productoForm.markAllAsTouched();
@@ -333,12 +381,17 @@ export class ProductosComponent implements OnInit {
 
     this.guardando.set(true);
     this.errorGuardar.set('');
+    const body = this.productoForm.getRawValue();
 
-    this.http.post(`${this.API}/productos`, this.productoForm.getRawValue(), { observe: 'response' }).subscribe({
+    const request$ = this.modoEdicion()
+      ? this.http.put(`${this.API}/productos/${this.productoEditandoId()}`, body, { observe: 'response' })
+      : this.http.post(`${this.API}/productos`, body, { observe: 'response' });
+
+    request$.subscribe({
       next: () => {
         this.guardando.set(false);
         this.cerrarModal();
-        this.successMsg.set('✓ Producto creado correctamente.');
+        this.successMsg.set(this.modoEdicion() ? '✓ Producto actualizado.' : '✓ Producto creado.');
         this.cargarProductos();
       },
       error: (err) => {
@@ -348,11 +401,27 @@ export class ProductosComponent implements OnInit {
     });
   }
 
+  eliminarProducto(p: Producto): void {
+    if (!confirm(`¿Eliminar "${p.nombre}"? Esta acción no se puede deshacer.`))
+      return;
+
+    this.http.delete(`${this.API}/productos/${p.id}`).subscribe({
+      next: () => {
+        this.successMsg.set(`✓ "${p.nombre}" eliminado.`);
+        this.cargarProductos();
+      },
+      error: () => this.errorMsg.set('No se pudo eliminar el producto.')
+    });
+  }
+
   aplicarAumentoMasivo(): void {
     this.actualizando.set(true);
     this.errorMsg.set('');
     this.successMsg.set('');
-    this.http.put<{ productosActualizados: number }>(`${this.API}/productos/actualizar-precios-masivo`, { porcentajeAumento: 10.0 }).subscribe({
+    this.http.put<{ productosActualizados: number }>(
+      `${this.API}/productos/actualizar-precios-masivo`,
+      { porcentajeAumento: 10.0 }
+    ).subscribe({
       next: res => {
         this.successMsg.set(`✓ Aumento aplicado a ${res.productosActualizados} producto${res.productosActualizados !== 1 ? 's' : ''}.`);
         this.actualizando.set(false);
@@ -364,6 +433,8 @@ export class ProductosComponent implements OnInit {
 
   cerrarModal(): void {
     this.mostrarModal.set(false);
+    this.modoEdicion.set(false);
+    this.productoEditandoId.set(null);
     this.productoForm.reset({ precioVenta: 0, costo: 0, stockActual: 0, stockMinimo: 0 });
     this.errorGuardar.set('');
   }

@@ -1,10 +1,12 @@
 using JujuyERP.Application.Productos.Commands.ActualizarPreciosMasivo;
+using JujuyERP.Application.Productos.Commands.ActualizarProducto;
 using JujuyERP.Application.Productos.Commands.CrearProducto;
+using JujuyERP.Application.Productos.Commands.EliminarProducto;
 using JujuyERP.Application.Productos.Queries.ObtenerProductos;
 using MediatR;
-using ProductoDto = JujuyERP.Application.Productos.Queries.ObtenerProductos.ProductoDto;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ProductoDto = JujuyERP.Application.Productos.Queries.ObtenerProductos.ProductoDto;
 
 namespace JujuyERP.WebAPI.Controllers;
 
@@ -57,9 +59,31 @@ public class ProductosController : ControllerBase
         return CreatedAtAction(nameof(GetProducto), new { id }, id);
     }
 
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ActualizarProducto(
+        Guid id,
+        [FromBody] ActualizarProductoCommand command,
+        CancellationToken cancellationToken)
+    {
+        var updated = await _mediator.Send(command with { Id = id }, cancellationToken);
+        return updated ? NoContent() : NotFound();
+    }
+
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> EliminarProducto(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var deleted = await _mediator.Send(new EliminarProductoCommand(id), cancellationToken);
+        return deleted ? NoContent() : NotFound();
+    }
+
     [HttpPut("actualizar-precios-masivo")]
     [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<int>> ActualizarPreciosMasivo(
         [FromBody] ActualizarPreciosMasivoCommand command,
         CancellationToken cancellationToken)
