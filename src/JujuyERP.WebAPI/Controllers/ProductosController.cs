@@ -1,3 +1,4 @@
+using JujuyERP.Application.Productos.Commands.ActualizarPreciosMasivo;
 using JujuyERP.Application.Productos.Commands.CrearProducto;
 using JujuyERP.Application.Productos.Queries.ObtenerProductos;
 using MediatR;
@@ -54,5 +55,16 @@ public class ProductosController : ControllerBase
     {
         var id = await _mediator.Send(command, cancellationToken);
         return CreatedAtAction(nameof(GetProducto), new { id }, id);
+    }
+
+    [HttpPut("actualizar-precios-masivo")]
+    [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<int>> ActualizarPreciosMasivo(
+        [FromBody] ActualizarPreciosMasivoCommand command,
+        CancellationToken cancellationToken)
+    {
+        var afectados = await _mediator.Send(command, cancellationToken);
+        return Ok(new { productosActualizados = afectados });
     }
 }
