@@ -2,21 +2,13 @@ import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
+import { ToastService } from '../../core/services/toast.service';
 
 interface MetricasDashboard {
   totalVentasDia: number;
   inversionStock: number;
   gananciaProyectada: number;
   productosCriticosCount: number;
-}
-
-interface QuickAction {
-  route: string;
-  label: string;
-  sub: string;
-  accentFrom: string;
-  accentTo: string;
-  dotColor: string;
 }
 
 @Component({
@@ -35,30 +27,30 @@ interface QuickAction {
         <p class="text-sm text-neutral-600 mt-1.5">Resumen operativo en tiempo real</p>
       </div>
 
-      @if (cargando()) {
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          @for (i of [1,2,3,4]; track i) {
-            <div class="h-32 rounded-2xl border border-white/[0.05] bg-[#0f1424]/40 animate-pulse"></div>
-          }
-        </div>
-      } @else if (metricas()) {
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-5">
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-5">
+        @if (cargando()) {
+          @for (i of [1,2,3,4]; track i) {
+            <div class="h-[116px] rounded-2xl border border-white/[0.04] bg-[#0f1424]/40 p-5 overflow-hidden">
+              <div class="skeleton h-2.5 w-16 mb-6 rounded-md"></div>
+              <div class="skeleton h-6 w-28 mb-3 rounded-md"></div>
+              <div class="skeleton h-2 w-20 rounded-md"></div>
+            </div>
+          }
+        } @else if (metricas()) {
 
           <div class="relative overflow-hidden rounded-2xl border border-white/[0.06]
                       bg-[#0f1424]/40 backdrop-blur-xl p-5
                       hover:border-emerald-500/20 transition-all duration-300 ease-out group">
             <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                  style="background:radial-gradient(ellipse at 0% 0%,rgba(16,185,129,0.05) 0%,transparent 60%)"></div>
-            <p class="text-[10px] font-semibold text-neutral-500 uppercase tracking-[0.12em] mb-3">
-              Ventas Hoy
-            </p>
+            <p class="text-[10px] font-semibold text-neutral-500 uppercase tracking-[0.12em] mb-3">Ventas Hoy</p>
             <p class="text-2xl font-black text-white tabular-nums leading-none mb-1.5">
               {{ metricas()!.totalVentasDia | currency:'ARS':'symbol':'1.0-0' }}
             </p>
             <p class="text-[11px] text-emerald-500/70 font-medium">Acumulado del día</p>
-            <div class="absolute top-4 right-4 w-7 h-7 rounded-lg bg-emerald-500/[0.08]
-                        border border-emerald-500/20 flex items-center justify-center">
+            <div class="absolute top-4 right-4 w-7 h-7 rounded-lg bg-emerald-500/[0.08] border border-emerald-500/20
+                        flex items-center justify-center">
               <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -71,15 +63,13 @@ interface QuickAction {
                       hover:border-blue-500/20 transition-all duration-300 ease-out group">
             <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                  style="background:radial-gradient(ellipse at 0% 0%,rgba(59,130,246,0.05) 0%,transparent 60%)"></div>
-            <p class="text-[10px] font-semibold text-neutral-500 uppercase tracking-[0.12em] mb-3">
-              Inversión
-            </p>
+            <p class="text-[10px] font-semibold text-neutral-500 uppercase tracking-[0.12em] mb-3">Inversión</p>
             <p class="text-2xl font-black text-white tabular-nums leading-none mb-1.5">
               {{ metricas()!.inversionStock | currency:'ARS':'symbol':'1.0-0' }}
             </p>
             <p class="text-[11px] text-blue-500/70 font-medium">Costo × stock</p>
-            <div class="absolute top-4 right-4 w-7 h-7 rounded-lg bg-blue-500/[0.08]
-                        border border-blue-500/20 flex items-center justify-center">
+            <div class="absolute top-4 right-4 w-7 h-7 rounded-lg bg-blue-500/[0.08] border border-blue-500/20
+                        flex items-center justify-center">
               <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
@@ -92,15 +82,13 @@ interface QuickAction {
                       hover:border-violet-500/20 transition-all duration-300 ease-out group">
             <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                  style="background:radial-gradient(ellipse at 0% 0%,rgba(139,92,246,0.05) 0%,transparent 60%)"></div>
-            <p class="text-[10px] font-semibold text-neutral-500 uppercase tracking-[0.12em] mb-3">
-              Potencial
-            </p>
+            <p class="text-[10px] font-semibold text-neutral-500 uppercase tracking-[0.12em] mb-3">Potencial</p>
             <p class="text-2xl font-black text-white tabular-nums leading-none mb-1.5">
               {{ metricas()!.gananciaProyectada | currency:'ARS':'symbol':'1.0-0' }}
             </p>
             <p class="text-[11px] text-violet-500/70 font-medium">Margen en góndola</p>
-            <div class="absolute top-4 right-4 w-7 h-7 rounded-lg bg-violet-500/[0.08]
-                        border border-violet-500/20 flex items-center justify-center">
+            <div class="absolute top-4 right-4 w-7 h-7 rounded-lg bg-violet-500/[0.08] border border-violet-500/20
+                        flex items-center justify-center">
               <svg class="w-3.5 h-3.5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
               </svg>
@@ -142,8 +130,10 @@ interface QuickAction {
             </div>
           </div>
 
-        </div>
+        }
+      </div>
 
+      @if (!cargando()) {
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           @for (a of quickActions; track a.route) {
             <a [routerLink]="a.route"
@@ -171,30 +161,18 @@ interface QuickAction {
             </a>
           }
         </div>
-
-      }
-
-      @if (error()) {
-        <div class="flex items-center gap-3 px-4 py-3 rounded-xl
-                    bg-red-500/[0.07] border border-red-500/20 mt-4">
-          <p class="text-sm text-red-400">{{ error() }}</p>
-          <button (click)="cargarMetricas()"
-            class="ml-auto text-xs font-medium text-red-400/70 hover:text-red-300 transition-colors underline">
-            Reintentar
-          </button>
-        </div>
       }
 
     </div>
   `
 })
 export class DashboardComponent implements OnInit {
-  private http = inject(HttpClient);
+  private http  = inject(HttpClient);
+  private toast = inject(ToastService);
   private readonly API = 'http://localhost:5075/api/dashboard/metricas';
 
   metricas = signal<MetricasDashboard | null>(null);
   cargando = signal(true);
-  error    = signal('');
 
   readonly quickActions = [
     {
@@ -230,10 +208,12 @@ export class DashboardComponent implements OnInit {
 
   cargarMetricas(): void {
     this.cargando.set(true);
-    this.error.set('');
     this.http.get<MetricasDashboard>(this.API).subscribe({
       next:  data => { this.metricas.set(data); this.cargando.set(false); },
-      error: ()   => { this.error.set('No se pudieron cargar las métricas.'); this.cargando.set(false); }
+      error: ()   => {
+        this.toast.error('No se pudieron cargar las métricas.');
+        this.cargando.set(false);
+      }
     });
   }
 }

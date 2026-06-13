@@ -1,6 +1,7 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { ToastService } from '../../../core/services/toast.service';
 
 interface VentaResumen {
   id: string;
@@ -27,28 +28,34 @@ interface VentaResumen {
         </p>
       </div>
 
-      @if (errorMsg()) {
-        <div class="px-4 py-3 rounded-xl bg-red-500/[0.07] border border-red-500/20 mb-5 flex items-center justify-between">
-          <p class="text-[13px] text-red-400">{{ errorMsg() }}</p>
-          <button (click)="cargarHistorial()"
-            class="text-[12px] text-red-400/70 hover:text-red-300 transition-colors underline">
-            Reintentar
-          </button>
-        </div>
-      }
-
       <div class="rounded-2xl border border-white/[0.06] bg-[#0f1424]/40 backdrop-blur-xl overflow-hidden">
 
         @if (cargando()) {
-          <div class="flex items-center justify-center py-24">
-            <svg class="animate-spin h-6 w-6 text-indigo-400/60" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-            </svg>
+          <div class="px-3 py-2">
+            <div class="flex items-center gap-4 px-4 py-2 mb-1">
+              <div class="skeleton h-2 flex-1 rounded-md"></div>
+              <div class="skeleton h-2 w-48 rounded-md"></div>
+              <div class="skeleton h-2 w-20 rounded-md"></div>
+              <div class="skeleton h-2 w-36 rounded-md"></div>
+            </div>
+            <div class="space-y-1">
+              @for (i of [1,2,3,4,5,6]; track i) {
+                <div class="flex items-center gap-4 px-4 py-3.5 rounded-xl">
+                  <div class="flex-1 space-y-1.5">
+                    <div class="skeleton h-3.5 w-20 rounded-md"></div>
+                    <div class="skeleton h-2.5 w-12 rounded-md"></div>
+                  </div>
+                  <div class="skeleton h-2.5 w-48 rounded-md"></div>
+                  <div class="skeleton h-5 w-10 rounded-full"></div>
+                  <div class="skeleton h-4 w-28 rounded-md"></div>
+                </div>
+              }
+            </div>
           </div>
         } @else if (ventas().length === 0) {
           <div class="flex flex-col items-center justify-center py-24">
-            <div class="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mb-4">
+            <div class="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06]
+                        flex items-center justify-center mb-4">
               <svg class="w-5 h-5 text-neutral-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                   d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
@@ -58,7 +65,6 @@ interface VentaResumen {
           </div>
         } @else {
           <div class="px-3 py-2">
-
             <div class="flex items-center gap-4 px-4 py-2 mb-1">
               <span class="flex-1 text-[10px] font-semibold text-neutral-600 uppercase tracking-[0.12em]">Fecha</span>
               <span class="w-48 shrink-0 text-right text-[10px] font-semibold text-neutral-600 uppercase tracking-[0.12em]">ID</span>
@@ -76,9 +82,7 @@ interface VentaResumen {
                     <p class="text-[13px] font-medium text-neutral-200">
                       {{ v.fecha | date:'dd/MM/yyyy' }}
                     </p>
-                    <p class="text-[11px] text-neutral-600 mt-0.5">
-                      {{ v.fecha | date:'HH:mm:ss' }}
-                    </p>
+                    <p class="text-[11px] text-neutral-600 mt-0.5">{{ v.fecha | date:'HH:mm:ss' }}</p>
                   </div>
                   <span class="w-48 shrink-0 text-right text-[11px] text-neutral-600 font-mono truncate">
                     {{ v.id }}
@@ -95,13 +99,12 @@ interface VentaResumen {
                 </div>
               }
             </div>
-
           </div>
         }
 
       </div>
 
-      @if (ventas().length > 0) {
+      @if (!cargando() && ventas().length > 0) {
         <div class="flex justify-end mt-4">
           <div class="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-white/[0.06]
                       bg-[#0f1424]/40 backdrop-blur-sm">
@@ -117,12 +120,12 @@ interface VentaResumen {
   `
 })
 export class HistorialVentasComponent implements OnInit {
-  private http = inject(HttpClient);
+  private http  = inject(HttpClient);
+  private toast = inject(ToastService);
   private readonly API = 'http://localhost:5075/api/ventas';
 
   ventas   = signal<VentaResumen[]>([]);
   cargando = signal(true);
-  errorMsg = signal('');
 
   totalAcumulado = () => this.ventas().reduce((sum, v) => sum + v.total, 0);
 
@@ -130,10 +133,12 @@ export class HistorialVentasComponent implements OnInit {
 
   cargarHistorial(): void {
     this.cargando.set(true);
-    this.errorMsg.set('');
     this.http.get<VentaResumen[]>(this.API).subscribe({
       next:  data => { this.ventas.set(data); this.cargando.set(false); },
-      error: ()   => { this.errorMsg.set('No se pudo cargar el historial.'); this.cargando.set(false); }
+      error: ()   => {
+        this.toast.error('No se pudo cargar el historial de ventas.');
+        this.cargando.set(false);
+      }
     });
   }
 }
