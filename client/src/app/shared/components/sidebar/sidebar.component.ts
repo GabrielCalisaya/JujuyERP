@@ -1,0 +1,96 @@
+import { Component, inject } from '@angular/core';
+import { RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service';
+
+interface NavItem {
+  label: string;
+  route: string;
+  icon: string;
+}
+
+@Component({
+  selector: 'app-sidebar',
+  standalone: true,
+  imports: [RouterLink, RouterLinkActive],
+  template: `
+    <aside class="w-60 shrink-0 h-screen bg-slate-950 border-r border-slate-800/60
+                  flex flex-col select-none">
+
+      <div class="px-5 py-5 border-b border-slate-800/60">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shrink-0">
+            <svg class="w-4.5 h-4.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm font-bold text-white tracking-tight">JujuyERP</p>
+            <p class="text-[10px] text-slate-500 truncate max-w-[120px]">
+              {{ auth.currentUser()?.nombreEmpresa ?? '—' }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <nav class="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+        @for (item of navItems; track item.route) {
+          <a [routerLink]="item.route"
+             routerLinkActive="bg-indigo-600/20 text-indigo-400 border-l-2 border-indigo-500"
+             [routerLinkActiveOptions]="{ exact: false }"
+             class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+                    text-slate-400 border-l-2 border-transparent
+                    hover:bg-slate-800/70 hover:text-slate-100 transition-all duration-150">
+            <span class="w-4 h-4 shrink-0" [innerHTML]="item.icon"></span>
+            {{ item.label }}
+          </a>
+        }
+      </nav>
+
+      <div class="px-4 py-4 border-t border-slate-800/60">
+        <button (click)="logout()"
+          class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm
+                 text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+          </svg>
+          Cerrar sesión
+        </button>
+      </div>
+
+    </aside>
+  `
+})
+export class SidebarComponent {
+  readonly auth   = inject(AuthService);
+  private  router = inject(Router);
+
+  readonly navItems: NavItem[] = [
+    {
+      label: 'Dashboard',
+      route: '/dashboard',
+      icon:  `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10-3a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1v-7z"/></svg>`
+    },
+    {
+      label: 'Inventario',
+      route: '/productos',
+      icon:  `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>`
+    },
+    {
+      label: 'Punto de Venta',
+      route: '/ventas',
+      icon:  `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>`
+    },
+    {
+      label: 'Historial',
+      route: '/ventas/historial',
+      icon:  `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>`
+    }
+  ];
+
+  logout(): void {
+    this.auth.logout();
+    this.router.navigate(['/auth/login']);
+  }
+}

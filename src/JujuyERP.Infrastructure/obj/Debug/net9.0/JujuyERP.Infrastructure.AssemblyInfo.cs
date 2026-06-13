@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("JujuyERP.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+40ac78c7e5b96683e24aec4dfcc8eddd85e1d456")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6491d8323c33b4ada813b125e67d573132b6b1ee")]
 [assembly: System.Reflection.AssemblyProductAttribute("JujuyERP.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("JujuyERP.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

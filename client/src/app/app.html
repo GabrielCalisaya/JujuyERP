@@ -1,1 +1,10 @@
-<router-outlet />
+@if (isAuthPage()) {
+  <router-outlet />
+} @else {
+  <div class="flex h-screen overflow-hidden bg-slate-100">
+    <app-sidebar />
+    <main class="flex-1 overflow-y-auto">
+      <router-outlet />
+    </main>
+  </div>
+}

@@ -1,5 +1,6 @@
 using JujuyERP.Application.Common.Exceptions;
 using JujuyERP.Application.Ventas.Commands.RegistrarVenta;
+using JujuyERP.Application.Ventas.Queries.ObtenerHistorialVentas;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,6 +18,15 @@ public class VentasController : ControllerBase
     public VentasController(ISender mediator)
     {
         _mediator = mediator;
+    }
+
+    [HttpGet]
+    [ProducesResponseType(typeof(List<VentaResumenDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<List<VentaResumenDto>>> ObtenerHistorial(
+        CancellationToken cancellationToken)
+    {
+        var historial = await _mediator.Send(new ObtenerHistorialVentasQuery(), cancellationToken);
+        return Ok(historial);
     }
 
     [HttpPost]
