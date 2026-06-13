@@ -17,6 +17,8 @@ public interface IApplicationDbContext
     DbSet<Tenant> Tenants { get; }
     DbSet<Producto> Productos { get; }
     DbSet<Usuario> Usuarios { get; }
+    DbSet<Venta> Ventas { get; }
+    DbSet<VentaDetalle> VentaDetalles { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
