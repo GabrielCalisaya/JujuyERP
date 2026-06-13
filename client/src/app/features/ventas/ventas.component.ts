@@ -29,7 +29,6 @@ interface UltimaVenta {
   fecha: Date;
   items: ItemCarrito[];
   total: number;
-  nombreComercio: string;
 }
 
 @Component({
@@ -37,423 +36,368 @@ interface UltimaVenta {
   standalone: true,
   imports: [CommonModule, CurrencyPipe, DatePipe, FormsModule],
   template: `
-    <div class="h-full flex flex-col">
+    <div class="flex h-full overflow-hidden">
 
-      <div class="flex-1 max-w-screen-xl mx-auto w-full px-5 py-5
-                  grid grid-cols-3 gap-4 min-h-0 overflow-hidden">
+      <div class="flex flex-col flex-1 overflow-hidden p-6 lg:p-8 gap-6">
 
-        <div class="col-span-2 flex flex-col gap-4 min-h-0">
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight
+                     bg-gradient-to-r from-white via-neutral-200 to-neutral-500
+                     bg-clip-text text-transparent">
+            Punto de Venta
+          </h1>
+          <p class="text-sm text-neutral-600 mt-1">Seleccioná productos para agregar al carrito</p>
+        </div>
 
-          <div class="flex items-center justify-between">
-            <h1 class="text-xl font-bold text-white tracking-tight">Punto de Venta</h1>
-            <span class="text-xs text-neutral-500 tabular-nums">
-              {{ productos().length }} productos disponibles
-            </span>
-          </div>
+        <div class="relative">
+          <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-600 pointer-events-none"
+            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+          </svg>
+          <input type="text" [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event)"
+            placeholder="Buscar producto…"
+            class="w-full pl-9 pr-4 py-2.5 rounded-xl text-[13px] text-neutral-300
+                   bg-white/[0.04] border border-white/[0.07] placeholder-neutral-600
+                   outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500/30
+                   transition-all duration-200"/>
+        </div>
 
-          <div class="relative">
-            <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 pointer-events-none"
-              fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
-            </svg>
-            <input type="text" [(ngModel)]="busqueda" placeholder="Buscar producto por nombre o código..."
-              class="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm text-neutral-200
-                     bg-neutral-800/60 border border-neutral-700/60 placeholder-neutral-500
-                     outline-none focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/20
-                     transition-all duration-200"/>
-          </div>
-
-          @if (cargandoProductos()) {
-            <div class="flex items-center justify-center py-16 flex-1">
-              <svg class="animate-spin h-7 w-7 text-indigo-400" fill="none" viewBox="0 0 24 24">
+        <div class="flex-1 overflow-y-auto rounded-2xl border border-white/[0.06]
+                    bg-[#0f1424]/40 backdrop-blur-xl">
+          @if (cargando()) {
+            <div class="flex items-center justify-center h-full">
+              <svg class="animate-spin h-5 w-5 text-indigo-400/60" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
               </svg>
             </div>
+          } @else if (productosFiltrados().length === 0) {
+            <div class="flex flex-col items-center justify-center h-full py-12">
+              <p class="text-[13px] text-neutral-600">Sin resultados</p>
+            </div>
           } @else {
-            <div class="flex-1 overflow-y-auto bg-neutral-900/60 backdrop-blur-md
-                        rounded-2xl border border-neutral-800/50">
-              @if (productosFiltrados().length === 0) {
-                <div class="flex flex-col items-center justify-center py-16 text-neutral-600">
-                  <svg class="w-10 h-10 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                      d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
-                  <p class="text-sm font-medium text-neutral-500">Sin resultados</p>
-                </div>
-              } @else {
-                <ul class="divide-y divide-neutral-800/50">
-                  @for (p of productosFiltrados(); track p.id) {
-                    <li (click)="agregarAlCarrito(p)"
-                      class="flex items-center justify-between px-4 py-3 cursor-pointer
-                             hover:bg-neutral-800/50 active:bg-neutral-800/80
-                             transition-all duration-200 ease-in-out select-none group"
-                      [class.opacity-30]="p.stockActual <= 0"
-                      [class.pointer-events-none]="p.stockActual <= 0">
-                      <div class="min-w-0 flex-1">
-                        <div class="flex items-center gap-2">
-                          <span class="font-medium text-neutral-200 text-sm truncate">{{ p.nombre }}</span>
-                          @if (p.stockActual <= p.stockMinimo && p.stockActual > 0) {
-                            <span class="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full
-                                         bg-amber-500/10 text-amber-400 border border-amber-500/20">Bajo</span>
-                          }
-                          @if (p.stockActual <= 0) {
-                            <span class="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full
-                                         bg-red-500/10 text-red-400 border border-red-500/20">Sin stock</span>
-                          }
-                        </div>
-                        <div class="flex items-center gap-3 mt-0.5">
-                          @if (p.codigoBarras) {
-                            <span class="text-xs text-neutral-600 font-mono">{{ p.codigoBarras }}</span>
-                          }
-                          <span class="text-xs text-neutral-600">Stock: {{ p.stockActual }}</span>
-                        </div>
-                      </div>
-                      <div class="flex items-center gap-3 ml-4 shrink-0">
-                        <span class="font-bold text-indigo-400 text-sm tabular-nums">
-                          {{ p.precioVenta | currency:'ARS':'symbol':'1.2-2' }}
-                        </span>
-                        <div class="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20
-                                    group-hover:bg-indigo-500/25 group-hover:border-indigo-400/40
-                                    flex items-center justify-center transition-all duration-200 shrink-0">
-                          <svg class="w-3.5 h-3.5 text-indigo-400"
-                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
-                          </svg>
-                        </div>
-                      </div>
-                    </li>
-                  }
-                </ul>
+            <div class="p-3 space-y-0.5">
+              @for (p of productosFiltrados(); track p.id) {
+                <button (click)="agregarAlCarrito(p)"
+                  [disabled]="p.stockActual === 0"
+                  class="group w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left
+                         border-l-2 border-transparent
+                         hover:bg-white/[0.02] hover:border-l-indigo-500
+                         transition-all duration-200 ease-out
+                         disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent
+                         disabled:hover:border-transparent">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-[13px] font-medium text-neutral-200 group-hover:text-white transition-colors truncate">
+                      {{ p.nombre }}
+                    </p>
+                    @if (p.codigoBarras) {
+                      <p class="text-[11px] text-neutral-600 font-mono mt-0.5">{{ p.codigoBarras }}</p>
+                    }
+                  </div>
+                  <div class="flex items-center gap-3 shrink-0">
+                    <span class="text-[13px] font-bold text-indigo-300 tabular-nums">
+                      {{ p.precioVenta | currency:'ARS':'symbol':'1.0-0' }}
+                    </span>
+                    <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold border"
+                          [class]="p.stockActual <= p.stockMinimo
+                            ? 'bg-red-500/[0.08] text-red-400 border-red-500/20'
+                            : 'bg-emerald-500/[0.08] text-emerald-400 border-emerald-500/20'">
+                      {{ p.stockActual }}
+                    </span>
+                  </div>
+                </button>
               }
             </div>
           }
         </div>
 
-        <div class="col-span-1 flex flex-col bg-neutral-900/60 backdrop-blur-md
-                    rounded-2xl border border-neutral-800/50 overflow-hidden">
+      </div>
 
-          <div class="px-5 py-4 border-b border-neutral-800/60 flex items-center justify-between shrink-0">
-            <div>
-              <h2 class="font-bold text-white text-sm">Ticket</h2>
-              <p class="text-xs text-neutral-500 mt-0.5">
-                {{ carrito().length }} ítem{{ carrito().length !== 1 ? 's' : '' }}
-              </p>
-            </div>
-            @if (carrito().length > 0) {
-              <button (click)="limpiarCarrito()"
-                class="text-xs text-neutral-600 hover:text-red-400 hover:bg-red-500/10
-                       px-2 py-1 rounded-lg transition-all duration-200">
-                Limpiar
-              </button>
-            }
-          </div>
+      <div class="w-[300px] xl:w-[340px] shrink-0 flex flex-col border-l border-white/[0.06]
+                  bg-[#0b0f1c]/60 backdrop-blur-xl">
 
-          <div class="flex-1 overflow-y-auto px-4 py-3">
-            @if (carrito().length === 0) {
-              <div class="flex flex-col items-center justify-center h-full py-10">
-                <svg class="w-12 h-12 mb-3 text-neutral-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+        <div class="px-5 py-4 border-b border-white/[0.06]">
+          <h2 class="text-sm font-bold text-white">Ticket</h2>
+          @if (carrito().length > 0) {
+            <p class="text-[11px] text-neutral-600 mt-0.5">{{ carrito().length }} producto{{ carrito().length > 1 ? 's' : '' }}</p>
+          }
+        </div>
+
+        <div class="flex-1 overflow-y-auto py-3 px-3">
+          @if (carrito().length === 0) {
+            <div class="flex flex-col items-center justify-center h-full gap-3 py-12">
+              <div class="w-10 h-10 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center">
+                <svg class="w-5 h-5 text-neutral-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                     d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
-                <p class="text-sm font-medium text-neutral-600">Seleccioná productos</p>
               </div>
-            } @else {
-              <ul class="space-y-2">
-                @for (item of carrito(); track item.productoId; let i = $index) {
-                  <li class="bg-neutral-800/50 border border-neutral-700/40 rounded-xl p-3
-                             transition-all duration-200">
-                    <div class="flex items-start justify-between gap-2 mb-2">
-                      <span class="text-sm font-medium text-neutral-300 leading-tight flex-1 min-w-0 truncate">
-                        {{ item.nombre }}
-                      </span>
-                      <button (click)="eliminarDelCarrito(i)"
-                        class="w-5 h-5 rounded-full flex items-center justify-center shrink-0
-                               text-neutral-600 hover:text-red-400 hover:bg-red-500/10 transition-all duration-150">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                      </button>
-                    </div>
-                    <div class="flex items-center justify-between gap-2">
-                      <div class="flex items-center gap-1.5">
-                        <button (click)="actualizarCantidad(i, item.cantidad - 1)"
-                          class="w-6 h-6 rounded-lg border border-neutral-700 bg-neutral-800 flex items-center justify-center
-                                 text-neutral-400 hover:border-indigo-500/50 hover:text-indigo-400 transition-all duration-150">
-                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"/>
-                          </svg>
-                        </button>
-                        <span class="w-8 text-center text-sm font-bold text-white tabular-nums">{{ item.cantidad }}</span>
-                        <button (click)="actualizarCantidad(i, item.cantidad + 1)"
-                          [disabled]="item.cantidad >= item.stockDisponible"
-                          class="w-6 h-6 rounded-lg border border-neutral-700 bg-neutral-800 flex items-center justify-center
-                                 text-neutral-400 hover:border-indigo-500/50 hover:text-indigo-400 transition-all duration-150
-                                 disabled:opacity-25 disabled:cursor-not-allowed">
-                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
-                          </svg>
-                        </button>
-                      </div>
-                      <div class="text-right">
-                        <div class="text-xs text-neutral-500 tabular-nums">{{ item.precioUnitario | currency:'ARS':'symbol':'1.2-2' }} c/u</div>
-                        <div class="text-sm font-bold text-neutral-200 tabular-nums">
-                          {{ item.precioUnitario * item.cantidad | currency:'ARS':'symbol':'1.2-2' }}
-                        </div>
-                      </div>
-                    </div>
-                  </li>
-                }
-              </ul>
-            }
-          </div>
+              <p class="text-[12px] text-neutral-600">Carrito vacío</p>
+            </div>
+          } @else {
+            <div class="space-y-1">
+              @for (item of carrito(); track item.productoId; let idx = $index) {
+                <div class="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-[#121829]/40
+                            border border-white/[0.04]">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-[12px] font-medium text-neutral-300 truncate">{{ item.nombre }}</p>
+                    <p class="text-[11px] text-indigo-400/70 tabular-nums mt-0.5">
+                      {{ item.precioUnitario | currency:'ARS':'symbol':'1.0-0' }} × {{ item.cantidad }}
+                    </p>
+                  </div>
+                  <div class="flex items-center gap-1 shrink-0">
+                    <button (click)="actualizarCantidad(idx, item.cantidad - 1)"
+                      class="w-5 h-5 flex items-center justify-center rounded-md text-neutral-500
+                             hover:text-white hover:bg-white/[0.06] transition-all duration-150 text-xs font-bold">
+                      −
+                    </button>
+                    <span class="w-5 text-center text-[12px] font-semibold text-neutral-300 tabular-nums">
+                      {{ item.cantidad }}
+                    </span>
+                    <button (click)="actualizarCantidad(idx, item.cantidad + 1)"
+                      [disabled]="item.cantidad >= item.stockDisponible"
+                      class="w-5 h-5 flex items-center justify-center rounded-md text-neutral-500
+                             hover:text-white hover:bg-white/[0.06] transition-all duration-150 text-xs font-bold
+                             disabled:opacity-30 disabled:cursor-not-allowed">
+                      +
+                    </button>
+                    <button (click)="eliminarDelCarrito(idx)"
+                      class="w-5 h-5 flex items-center justify-center rounded-md text-neutral-700
+                             hover:text-red-400 hover:bg-red-500/[0.08] transition-all duration-150 ml-1">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
 
-          <div class="border-t border-neutral-800/60 px-5 py-4 shrink-0 space-y-3">
-            <div class="flex items-center justify-between pt-2">
-              <span class="text-sm font-bold text-neutral-300">TOTAL</span>
+        @if (carrito().length > 0) {
+          <div class="px-5 py-4 border-t border-white/[0.06] space-y-4">
+            <div class="flex items-baseline justify-between">
+              <span class="text-[11px] font-semibold text-neutral-600 uppercase tracking-[0.12em]">Total</span>
               <span class="text-2xl font-black text-white tabular-nums">
                 {{ totalVenta() | currency:'ARS':'symbol':'1.0-0' }}
               </span>
             </div>
 
             @if (errorVenta()) {
-              <div class="px-3 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20">
-                <p class="text-xs text-red-400">{{ errorVenta() }}</p>
-              </div>
+              <p class="text-[12px] text-red-400 px-3 py-2 rounded-xl bg-red-500/[0.07] border border-red-500/20">
+                {{ errorVenta() }}
+              </p>
             }
 
-            <button (click)="confirmarVenta()"
-              [disabled]="carrito().length === 0 || confirmando()"
-              class="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold text-white
-                     bg-gradient-to-r from-emerald-500 to-emerald-600
-                     hover:from-emerald-400 hover:to-emerald-500
-                     shadow-lg shadow-emerald-900/40 active:scale-[0.97]
-                     transition-all duration-300 ease-in-out
-                     disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none disabled:active:scale-100">
+            <button (click)="confirmarVenta()" [disabled]="confirmando()"
+              class="w-full flex items-center justify-center gap-2.5 py-3 rounded-xl
+                     text-[13px] font-bold text-white
+                     bg-gradient-to-b from-emerald-500 to-emerald-700
+                     border border-emerald-400/30
+                     shadow-[0_0_20px_rgba(16,185,129,0.18)]
+                     hover:from-emerald-400 hover:to-emerald-600
+                     active:scale-[0.97] transition-all duration-200
+                     disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100">
               @if (confirmando()) {
                 <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                 </svg>
-                Procesando...
               } @else {
-                <span>💳</span><span>Confirmar y Facturar</span>
+                <span>💳</span>
               }
+              {{ confirmando() ? 'Procesando…' : 'Confirmar Venta' }}
             </button>
           </div>
-        </div>
+        }
+
       </div>
     </div>
 
     @if (ultimaVenta()) {
-      <div class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-6 gap-8">
+      <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-md" (click)="cerrarTicket()"></div>
 
-        <div class="bg-[#0F1420] border border-neutral-800/60 rounded-3xl shadow-2xl p-7 w-72
-                    font-mono text-xs text-neutral-300 flex flex-col gap-1">
-          <p class="text-center font-black text-base text-white tracking-tight">{{ ultimaVenta()!.nombreComercio }}</p>
-          <p class="text-center text-neutral-600 text-[9px] mt-0.5">────────────────────</p>
-          <p class="text-center text-neutral-500 text-[10px]">
-            {{ ultimaVenta()!.fecha | date:'dd/MM/yyyy HH:mm:ss' }}
-          </p>
-          <p class="text-neutral-700 mt-1">────────────────────</p>
-          @for (item of ultimaVenta()!.items; track item.productoId) {
-            <div class="flex justify-between gap-2 mt-1">
-              <span class="flex-1 truncate text-neutral-400">{{ item.cantidad }}x {{ item.nombre }}</span>
-              <span class="tabular-nums shrink-0 text-neutral-300">
-                {{ item.precioUnitario * item.cantidad | currency:'ARS':'symbol':'1.0-0' }}
+        <div class="relative w-full max-w-sm rounded-3xl overflow-hidden
+                    bg-[#0c1120] border border-white/[0.07] shadow-2xl"
+             style="animation:fadeInScale .2s ease-out">
+
+          <div class="px-6 py-5 border-b border-white/[0.06]">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-emerald-500/[0.1] border border-emerald-500/20
+                          flex items-center justify-center">
+                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                </svg>
+              </div>
+              <div>
+                <p class="text-[14px] font-bold text-white">Venta registrada</p>
+                <p class="text-[11px] text-neutral-600">
+                  {{ ultimaVenta()!.fecha | date:'dd/MM/yyyy HH:mm' }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div id="thermal-ticket" class="px-6 py-4">
+            <div class="space-y-1 mb-4">
+              @for (item of ultimaVenta()!.items; track item.productoId) {
+                <div class="flex items-center gap-2">
+                  <span class="flex-1 text-[12px] text-neutral-400 truncate">{{ item.nombre }}</span>
+                  <span class="text-[11px] text-neutral-600 tabular-nums w-12 text-center">
+                    ×{{ item.cantidad }}
+                  </span>
+                  <span class="text-[12px] font-semibold text-neutral-300 tabular-nums w-24 text-right">
+                    {{ item.cantidad * item.precioUnitario | currency:'ARS':'symbol':'1.0-0' }}
+                  </span>
+                </div>
+              }
+            </div>
+
+            <div class="flex items-baseline justify-between pt-3 border-t border-white/[0.06] mb-1">
+              <span class="text-[11px] font-semibold text-neutral-500 uppercase tracking-[0.1em]">Total</span>
+              <span class="text-xl font-black text-white tabular-nums">
+                {{ ultimaVenta()!.total | currency:'ARS':'symbol':'1.0-0' }}
               </span>
             </div>
-          }
-          <p class="text-neutral-700 mt-2">────────────────────</p>
-          <div class="flex justify-between font-black text-base mt-1 text-white">
-            <span>TOTAL</span>
-            <span class="tabular-nums">{{ ultimaVenta()!.total | currency:'ARS':'symbol':'1.0-0' }}</span>
-          </div>
-          <p class="text-neutral-700 mt-2">────────────────────</p>
-          <p class="text-center text-neutral-500 text-[10px] mt-1">¡Gracias por su compra!</p>
-        </div>
-
-        <div class="flex flex-col gap-3 items-start">
-          <div class="flex items-center gap-3 mb-3">
-            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600
-                        flex items-center justify-center shadow-lg shadow-emerald-900/50">
-              <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-              </svg>
-            </div>
-            <div>
-              <p class="text-white font-bold">Venta registrada</p>
-              <p class="text-neutral-500 text-sm">
-                {{ ultimaVenta()!.total | currency:'ARS':'symbol':'1.0-0' }}
-              </p>
-            </div>
+            <p class="text-center text-[10px] text-neutral-700 mt-3">Gracias por su compra</p>
           </div>
 
-          <button (click)="imprimirTicket()"
-            class="flex items-center gap-2.5 px-5 py-3 rounded-xl font-semibold text-sm
-                   bg-neutral-800 border border-neutral-700 text-neutral-200
-                   hover:bg-neutral-700 hover:border-neutral-600 hover:text-white
-                   transition-all duration-200 w-full">
-            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-            </svg>
-            Imprimir Ticket
-          </button>
-
-          <button (click)="nuevaVenta()"
-            class="flex items-center gap-2.5 px-5 py-3 rounded-xl font-semibold text-sm text-white
-                   bg-gradient-to-r from-indigo-500 to-violet-600
-                   hover:from-indigo-400 hover:to-violet-500
-                   shadow-lg shadow-indigo-900/40 active:scale-[0.97]
-                   transition-all duration-300 w-full">
-            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-            Nueva Venta
-          </button>
-        </div>
-      </div>
-
-      <div id="thermal-ticket" style="display:none">
-        <div style="text-align:center; font-weight:900; font-size:11pt; margin-bottom:4px">
-          {{ ultimaVenta()!.nombreComercio }}
-        </div>
-        <div style="text-align:center; color:#666; font-size:8pt; margin-bottom:8px">
-          {{ ultimaVenta()!.fecha | date:'dd/MM/yyyy HH:mm:ss' }}
-        </div>
-        <div style="border-top:1px dashed #999; margin-bottom:6px"></div>
-        @for (item of ultimaVenta()!.items; track item.productoId) {
-          <div style="display:flex; justify-content:space-between; margin-bottom:3px">
-            <span>{{ item.cantidad }}x {{ item.nombre }}</span>
-            <span>{{ item.precioUnitario * item.cantidad | currency:'ARS':'symbol':'1.0-0' }}</span>
+          <div class="px-6 py-4 border-t border-white/[0.06] flex gap-2.5">
+            <button (click)="imprimirTicket()"
+              class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl
+                     text-[13px] font-semibold text-neutral-200
+                     bg-gradient-to-b from-neutral-800 to-neutral-950
+                     border border-neutral-700/50
+                     hover:from-neutral-700 hover:to-neutral-900
+                     transition-all duration-200">
+              🖨️ Imprimir
+            </button>
+            <button (click)="cerrarTicket()"
+              class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl
+                     text-[13px] font-bold text-white
+                     bg-gradient-to-b from-indigo-500 to-indigo-700
+                     border border-indigo-400/30
+                     shadow-[0_0_16px_rgba(99,102,241,0.2)]
+                     hover:from-indigo-400 hover:to-indigo-600
+                     transition-all duration-200">
+              Nueva venta
+            </button>
           </div>
-        }
-        <div style="border-top:1px dashed #999; margin-top:6px; margin-bottom:6px"></div>
-        <div style="display:flex; justify-content:space-between; font-weight:900; font-size:11pt">
-          <span>TOTAL</span>
-          <span>{{ ultimaVenta()!.total | currency:'ARS':'symbol':'1.0-0' }}</span>
         </div>
-        <div style="border-top:1px dashed #999; margin-top:6px; margin-bottom:6px"></div>
-        <div style="text-align:center; color:#666; font-size:8pt">¡Gracias por su compra!</div>
-        <div style="text-align:center; color:#999; font-size:7pt; margin-top:3px">JujuyERP</div>
       </div>
     }
-  `
+  `,
+  styles: [`
+    @keyframes fadeInScale {
+      from { opacity:0; transform:scale(0.96) translateY(6px); }
+      to   { opacity:1; transform:scale(1)    translateY(0);   }
+    }
+  `]
 })
 export class VentasComponent implements OnInit {
-  private http          = inject(HttpClient);
+  private http         = inject(HttpClient);
   private ventasService = inject(VentasService);
-  readonly auth         = inject(AuthService);
+  readonly auth        = inject(AuthService);
 
-  private readonly API_PRODUCTOS = 'http://localhost:5075/api/productos';
+  private readonly API = 'http://localhost:5075/api/productos';
 
-  productos         = signal<Producto[]>([]);
-  cargandoProductos = signal(true);
-  carrito           = signal<ItemCarrito[]>([]);
-  confirmando       = signal(false);
-  errorVenta        = signal('');
-  ultimaVenta       = signal<UltimaVenta | null>(null);
-  busqueda          = '';
+  productos    = signal<Producto[]>([]);
+  cargando     = signal(true);
+  confirmando  = signal(false);
+  errorVenta   = signal('');
+  ultimaVenta  = signal<UltimaVenta | null>(null);
+  busqueda     = signal('');
 
-  totalVenta = computed(() =>
-    this.carrito().reduce((sum, item) => sum + item.precioUnitario * item.cantidad, 0)
-  );
+  carrito = signal<ItemCarrito[]>([]);
 
   productosFiltrados = computed(() => {
-    const q = this.busqueda.toLowerCase().trim();
+    const q = this.busqueda().toLowerCase().trim();
+    if (!q) return this.productos();
     return this.productos().filter(p =>
-      p.activo && p.stockActual > 0 && (
-        !q ||
-        p.nombre.toLowerCase().includes(q) ||
-        (p.codigoBarras ?? '').toLowerCase().includes(q)
-      )
+      p.nombre.toLowerCase().includes(q) ||
+      (p.codigoBarras ?? '').toLowerCase().includes(q)
     );
   });
 
-  ngOnInit(): void { this.cargarProductos(); }
+  totalVenta = computed(() =>
+    this.carrito().reduce((sum, i) => sum + i.precioUnitario * i.cantidad, 0)
+  );
 
-  cargarProductos(): void {
-    this.cargandoProductos.set(true);
-    this.http.get<Producto[]>(this.API_PRODUCTOS).subscribe({
-      next:  data => { this.productos.set(data); this.cargandoProductos.set(false); },
-      error: ()   => this.cargandoProductos.set(false)
+  ngOnInit(): void {
+    this.http.get<Producto[]>(this.API).subscribe({
+      next:  data => { this.productos.set(data); this.cargando.set(false); },
+      error: ()   => this.cargando.set(false)
     });
   }
 
-  agregarAlCarrito(producto: Producto): void {
-    const idx = this.carrito().findIndex(i => i.productoId === producto.id);
+  agregarAlCarrito(p: Producto): void {
+    if (p.stockActual === 0) return;
+    const current = this.carrito();
+    const idx = current.findIndex(i => i.productoId === p.id);
     if (idx >= 0) {
-      if (this.carrito()[idx].cantidad >= producto.stockActual) return;
-      this.carrito.update(items =>
-        items.map((item, i) => i === idx ? { ...item, cantidad: item.cantidad + 1 } : item)
-      );
+      if (current[idx].cantidad >= current[idx].stockDisponible) return;
+      const updated = [...current];
+      updated[idx] = { ...updated[idx], cantidad: updated[idx].cantidad + 1 };
+      this.carrito.set(updated);
     } else {
-      this.carrito.update(items => [...items, {
-        productoId:      producto.id,
-        nombre:          producto.nombre,
-        precioUnitario:  producto.precioVenta,
+      this.carrito.set([...current, {
+        productoId:      p.id,
+        nombre:          p.nombre,
+        precioUnitario:  p.precioVenta,
         cantidad:        1,
-        stockDisponible: producto.stockActual
+        stockDisponible: p.stockActual
       }]);
     }
-    this.errorVenta.set('');
   }
 
   actualizarCantidad(index: number, nuevaCantidad: number): void {
     if (nuevaCantidad <= 0) { this.eliminarDelCarrito(index); return; }
-    this.carrito.update(items =>
-      items.map((item, i) => i === index
-        ? { ...item, cantidad: Math.min(nuevaCantidad, item.stockDisponible) }
-        : item)
-    );
+    const current = this.carrito();
+    if (nuevaCantidad > current[index].stockDisponible) return;
+    const updated = [...current];
+    updated[index] = { ...updated[index], cantidad: nuevaCantidad };
+    this.carrito.set(updated);
   }
 
   eliminarDelCarrito(index: number): void {
-    this.carrito.update(items => items.filter((_, i) => i !== index));
-  }
-
-  limpiarCarrito(): void {
-    this.carrito.set([]);
-    this.errorVenta.set('');
+    this.carrito.set(this.carrito().filter((_, i) => i !== index));
   }
 
   confirmarVenta(): void {
-    if (this.carrito().length === 0) return;
+    if (this.carrito().length === 0 || this.confirmando()) return;
     this.confirmando.set(true);
     this.errorVenta.set('');
 
-    const snapshot = [...this.carrito()];
-    const total    = this.totalVenta();
+    const items = this.carrito().map(i => ({ productoId: i.productoId, cantidad: i.cantidad }));
 
-    this.ventasService.registrarVenta(
-      snapshot.map(i => ({ productoId: i.productoId, cantidad: i.cantidad }))
-    ).subscribe({
+    this.ventasService.registrarVenta(items).subscribe({
       next: () => {
+        const venta: UltimaVenta = {
+          fecha: new Date(),
+          items: [...this.carrito()],
+          total: this.totalVenta()
+        };
+        this.productos.set(
+          this.productos().map(p => {
+            const item = this.carrito().find(i => i.productoId === p.id);
+            return item ? { ...p, stockActual: p.stockActual - item.cantidad } : p;
+          })
+        );
+        this.carrito.set([]);
         this.confirmando.set(false);
-        this.ultimaVenta.set({
-          fecha:          new Date(),
-          items:          snapshot,
-          total,
-          nombreComercio: this.auth.currentUser()?.nombreEmpresa ?? 'JujuyERP'
-        });
-        this.limpiarCarrito();
-        this.cargarProductos();
+        this.ultimaVenta.set(venta);
       },
       error: err => {
-        this.errorVenta.set(err?.error?.detail ?? 'No se pudo registrar la venta.');
+        this.errorVenta.set(err?.error?.message ?? err?.error?.detail ?? 'Error al registrar la venta.');
         this.confirmando.set(false);
       }
     });
   }
 
-  imprimirTicket(): void {
-    const el = document.getElementById('thermal-ticket');
-    if (el) el.style.display = 'block';
-    window.print();
-    if (el) el.style.display = 'none';
-  }
+  imprimirTicket(): void { window.print(); }
 
-  nuevaVenta(): void { this.ultimaVenta.set(null); }
+  cerrarTicket(): void { this.ultimaVenta.set(null); }
 }
