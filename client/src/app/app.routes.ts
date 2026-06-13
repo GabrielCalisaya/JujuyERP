@@ -9,6 +9,11 @@ export const routes: Routes = [
       import('./features/auth/login/login.component').then(m => m.LoginComponent)
   },
   {
+    path: 'auth/register-comercio',
+    loadComponent: () =>
+      import('./features/auth/register-tenant/register-tenant.component').then(m => m.RegisterTenantComponent)
+  },
+  {
     path: 'dashboard',
     canActivate: [authGuard],
     loadComponent: () =>

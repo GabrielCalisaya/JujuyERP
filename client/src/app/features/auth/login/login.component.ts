@@ -1,7 +1,7 @@
-import { Component, signal, inject } from '@angular/core';
+import { Component, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -78,6 +78,15 @@ import { AuthService } from '../../../core/services/auth.service';
               }
             </div>
 
+            @if (registered()) {
+              <div class="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-100">
+                <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+                <p class="text-sm text-emerald-700">¡Cuenta creada! Ingresá para estrenar tu ERP.</p>
+              </div>
+            }
+
             @if (errorMessage()) {
               <div class="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-red-50 border border-red-100">
                 <svg class="w-4 h-4 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -112,7 +121,7 @@ import { AuthService } from '../../../core/services/auth.service';
 
           <p class="text-center text-sm text-slate-500 mt-6">
             ¿No tenés cuenta?
-            <a routerLink="/auth/register" class="font-medium text-indigo-600 hover:text-indigo-800 transition-colors ml-1">
+            <a routerLink="/auth/register-comercio" class="font-medium text-indigo-600 hover:text-indigo-800 transition-colors ml-1">
               Registrá tu empresa
             </a>
           </p>
@@ -122,14 +131,20 @@ import { AuthService } from '../../../core/services/auth.service';
     </div>
   `
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   private fb     = inject(FormBuilder);
   private auth   = inject(AuthService);
   private router = inject(Router);
+  private route  = inject(ActivatedRoute);
 
   loading      = signal(false);
   errorMessage = signal('');
   showPassword = signal(false);
+  registered   = signal(false);
+
+  ngOnInit(): void {
+    this.registered.set(this.route.snapshot.queryParamMap.get('registered') === '1');
+  }
 
   form = this.fb.nonNullable.group({
     email:    ['', [Validators.required, Validators.email]],

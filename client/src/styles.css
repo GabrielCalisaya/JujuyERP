@@ -1,1 +1,25 @@
 @import "tailwindcss";
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #thermal-ticket,
+  #thermal-ticket * {
+    visibility: visible;
+  }
+
+  #thermal-ticket {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 80mm;
+    padding: 4mm 3mm;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 9pt;
+    line-height: 1.5;
+    background: white;
+    color: black;
+  }
+}

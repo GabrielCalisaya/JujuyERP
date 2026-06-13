@@ -34,10 +34,11 @@ export class AuthService {
   private readonly USER_KEY = 'jujuy_erp_user';
 
   private _currentUser = signal<AuthResponse | null>(this.loadUserFromStorage());
+  private _token       = signal<string | null>(localStorage.getItem(this.TOKEN_KEY));
 
-  readonly currentUser = this._currentUser.asReadonly();
+  readonly currentUser     = this._currentUser.asReadonly();
   readonly isAuthenticated = computed(() => this._currentUser() !== null);
-  readonly token = computed(() => localStorage.getItem(this.TOKEN_KEY));
+  readonly token           = this._token.asReadonly();
 
   constructor(private http: HttpClient) {}
 
@@ -45,6 +46,14 @@ export class AuthService {
     return this.http.post<AuthResponse>(`${this.API}/register`, request).pipe(
       tap(response => this.persist(response))
     );
+  }
+
+  registerComercio(nombreComercio: string, adminEmail: string, adminPassword: string): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.API}/register-tenant`, {
+      nombreComercio,
+      adminEmail,
+      adminPassword
+    });
   }
 
   login(request: LoginRequest): Observable<AuthResponse> {
@@ -57,12 +66,14 @@ export class AuthService {
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.USER_KEY);
     this._currentUser.set(null);
+    this._token.set(null);
   }
 
   private persist(response: AuthResponse): void {
     localStorage.setItem(this.TOKEN_KEY, response.token);
     localStorage.setItem(this.USER_KEY, JSON.stringify(response));
     this._currentUser.set(response);
+    this._token.set(response.token);
   }
 
   private loadUserFromStorage(): AuthResponse | null {

@@ -73,6 +73,43 @@ public class AuthController : ControllerBase
     /// </summary>
     /// <response code="200">Login exitoso. Incluye el token JWT.</response>
     /// <response code="401">Credenciales inválidas o cuenta suspendida.</response>
+    [HttpPost("register-tenant")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<AuthResponseDto>> RegisterTenant(
+        [FromBody] RegisterComercioDto dto,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var registrarDto = new RegistrarTenantDto(
+                NombreEmpresa: dto.NombreComercio,
+                RucCuit: "N/A",
+                AdminNombre: dto.AdminEmail.Split('@')[0],
+                AdminEmail: dto.AdminEmail,
+                AdminPassword: dto.AdminPassword
+            );
+
+            var response = await _identityService.RegistrarTenantAsync(registrarDto, cancellationToken);
+
+            _logger.LogInformation(
+                "Nuevo comercio registrado via portal: {NombreComercio} (TenantId: {TenantId})",
+                response.NombreEmpresa, response.TenantId);
+
+            return StatusCode(StatusCodes.Status201Created, response);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new ProblemDetails
+            {
+                Title = "Conflicto en el registro",
+                Detail = ex.Message,
+                Status = StatusCodes.Status409Conflict
+            });
+        }
+    }
+
     [HttpPost("login")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]

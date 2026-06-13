@@ -42,3 +42,9 @@ public record AuthResponseDto(
     Guid TenantId,
     string NombreEmpresa
 );
+
+public record RegisterComercioDto(
+    string NombreComercio,
+    string AdminEmail,
+    string AdminPassword
+);
