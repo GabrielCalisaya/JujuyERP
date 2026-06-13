@@ -110,9 +110,10 @@ type Orden = 'none' | 'mayorPrecio' | 'menorPrecio' | 'mayorStock';
             <div class="flex items-center gap-4 px-4 py-2 mb-1">
               <div class="skeleton h-2 w-20 rounded-md"></div>
               <div class="skeleton h-2 flex-1 rounded-md"></div>
-              <div class="skeleton h-2 w-28 rounded-md"></div>
-              <div class="skeleton h-2 w-28 rounded-md"></div>
+              <div class="skeleton h-2 w-24 rounded-md"></div>
+              <div class="skeleton h-2 w-24 rounded-md"></div>
               <div class="skeleton h-2 w-16 rounded-md"></div>
+              <div class="skeleton h-2 w-14 rounded-md"></div>
               <div class="w-16"></div>
             </div>
             <div class="space-y-1">
@@ -133,26 +134,47 @@ type Orden = 'none' | 'mayorPrecio' | 'menorPrecio' | 'mayorStock';
             </div>
           </div>
         } @else if (productosFiltrados().length === 0) {
-          <div class="flex flex-col items-center justify-center py-24">
-            <div class="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06]
-                        flex items-center justify-center mb-4">
-              <svg class="w-5 h-5 text-neutral-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+          <div class="relative flex flex-col items-center justify-center py-20 overflow-hidden">
+            <div class="absolute inset-0 pointer-events-none"
+                 style="background:radial-gradient(ellipse 60% 40% at 50% 60%,rgba(99,102,241,0.05) 0%,transparent 70%)"></div>
+            <div class="relative w-20 h-20 rounded-3xl bg-[#0f1424]/60 border border-white/[0.07]
+                        flex items-center justify-center mb-6 shadow-2xl">
+              <svg class="w-9 h-9 text-neutral-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2"
                   d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
               </svg>
+              <div class="absolute inset-0 rounded-3xl"
+                   style="box-shadow:inset 0 0 24px rgba(99,102,241,0.06)"></div>
             </div>
-            <p class="text-[13px] font-medium text-neutral-600">
-              {{ productos().length === 0 ? 'Sin productos registrados' : 'Sin resultados' }}
-            </p>
+            @if (productos().length === 0) {
+              <p class="text-[15px] font-semibold text-neutral-400 mb-2">Catálogo vacío</p>
+              <p class="text-[13px] text-neutral-600 text-center max-w-xs leading-relaxed mb-6">
+                Empezá cargando tu stock usando el botón <span class="text-indigo-400 font-semibold">+ Nuevo</span>.
+              </p>
+              <div class="flex flex-col gap-2 text-[12px] text-neutral-600 max-w-xs">
+                @for (tip of tips; track tip.text) {
+                  <div class="flex items-start gap-2.5">
+                    <span class="text-indigo-500/60 mt-0.5 shrink-0">{{ tip.icon }}</span>
+                    <span>{{ tip.text }}</span>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="text-[15px] font-semibold text-neutral-400 mb-2">Sin resultados</p>
+              <p class="text-[13px] text-neutral-600 text-center">
+                Intentá con otro término o quitá los filtros activos.
+              </p>
+            }
           </div>
         } @else {
           <div class="px-3 py-2">
             <div class="flex items-center gap-4 px-4 py-2 mb-1">
               <span class="w-24 shrink-0 text-[10px] font-semibold text-neutral-600 uppercase tracking-[0.12em]">Código</span>
               <span class="flex-1 text-[10px] font-semibold text-neutral-600 uppercase tracking-[0.12em]">Nombre</span>
-              <span class="w-32 shrink-0 text-right text-[10px] font-semibold text-neutral-600 uppercase tracking-[0.12em]">Costo</span>
-              <span class="w-32 shrink-0 text-right text-[10px] font-semibold text-neutral-600 uppercase tracking-[0.12em]">Precio</span>
-              <span class="w-20 shrink-0 text-right text-[10px] font-semibold text-neutral-600 uppercase tracking-[0.12em]">Stock</span>
+              <span class="w-28 shrink-0 text-right text-[10px] font-semibold text-neutral-600 uppercase tracking-[0.12em]">Costo</span>
+              <span class="w-28 shrink-0 text-right text-[10px] font-semibold text-neutral-600 uppercase tracking-[0.12em]">Precio</span>
+              <span class="w-20 shrink-0 text-center text-[10px] font-semibold text-indigo-400/80 uppercase tracking-[0.12em]">Margen</span>
+              <span class="w-16 shrink-0 text-right text-[10px] font-semibold text-neutral-600 uppercase tracking-[0.12em]">Stock</span>
               <span class="w-16 shrink-0"></span>
             </div>
 
@@ -172,13 +194,19 @@ type Orden = 'none' | 'mayorPrecio' | 'menorPrecio' | 'mayorStock';
                       <p class="text-[11px] text-neutral-600 truncate hidden lg:block mt-0.5">{{ p.descripcion }}</p>
                     }
                   </div>
-                  <span class="w-32 shrink-0 text-right text-[13px] text-neutral-500 tabular-nums">
+                  <span class="w-28 shrink-0 text-right text-[13px] text-neutral-500 tabular-nums">
                     {{ p.costo | currency:'ARS':'symbol':'1.0-0' }}
                   </span>
-                  <span class="w-32 shrink-0 text-right text-[13px] font-semibold text-neutral-200 tabular-nums">
+                  <span class="w-28 shrink-0 text-right text-[13px] font-semibold text-neutral-200 tabular-nums">
                     {{ p.precioVenta | currency:'ARS':'symbol':'1.0-0' }}
                   </span>
-                  <span class="w-20 shrink-0 text-right">
+                  <span class="w-20 shrink-0 text-center">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border"
+                          [class]="margenClass(p.precioVenta, p.costo)">
+                      {{ margen(p.precioVenta, p.costo) }}%
+                    </span>
+                  </span>
+                  <span class="w-16 shrink-0 text-right">
                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border"
                           [class]="p.stockActual <= p.stockMinimo
                             ? 'bg-red-500/[0.1] text-red-400 border-red-500/20'
@@ -503,4 +531,23 @@ export class ProductosComponent implements OnInit {
     const c = this.productoForm.get(field);
     return !!(c?.invalid && c?.touched);
   }
+
+  margen(precio: number, costo: number): number {
+    if (precio <= 0) return 0;
+    return Math.round(((precio - costo) / precio) * 100);
+  }
+
+  margenClass(precio: number, costo: number): string {
+    const m = this.margen(precio, costo);
+    if (m >= 40) return 'bg-emerald-500/[0.1] text-emerald-400 border-emerald-500/20';
+    if (m >= 20) return 'bg-blue-500/[0.1] text-blue-400 border-blue-500/20';
+    if (m > 0)   return 'bg-amber-500/[0.1] text-amber-400 border-amber-500/20';
+    return 'bg-red-500/[0.1] text-red-400 border-red-500/20';
+  }
+
+  readonly tips = [
+    { icon: '→', text: 'Completá el código de barras para agilizar la venta con escáner.' },
+    { icon: '→', text: 'El stock mínimo activa las alertas críticas en el Dashboard.' },
+    { icon: '→', text: 'El margen de ganancia se calcula automáticamente a partir de costo y precio.' },
+  ];
 }

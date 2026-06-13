@@ -11,9 +11,7 @@ public class RegistrarVentaCommandHandler : IRequestHandler<RegistrarVentaComman
     private readonly IApplicationDbContext _context;
 
     public RegistrarVentaCommandHandler(IApplicationDbContext context)
-    {
-        _context = context;
-    }
+        => _context = context;
 
     public async Task<Guid> Handle(RegistrarVentaCommand request, CancellationToken cancellationToken)
     {
@@ -35,11 +33,13 @@ public class RegistrarVentaCommandHandler : IRequestHandler<RegistrarVentaComman
                 throw new VentaInvalidaException("La cantidad de cada ítem debe ser mayor a cero.");
 
             var producto = productos.FirstOrDefault(p => p.Id == item.ProductoId)
-                ?? throw new VentaInvalidaException($"El producto con ID '{item.ProductoId}' no fue encontrado o está inactivo.");
+                ?? throw new VentaInvalidaException(
+                    $"El producto con ID '{item.ProductoId}' no fue encontrado o está inactivo.");
 
             if (producto.StockActual < item.Cantidad)
                 throw new VentaInvalidaException(
-                    $"Stock insuficiente para '{producto.Nombre}'. Disponible: {producto.StockActual}, solicitado: {item.Cantidad}.");
+                    $"Stock insuficiente para '{producto.Nombre}'. " +
+                    $"Disponible: {producto.StockActual}, solicitado: {item.Cantidad}.");
 
             producto.StockActual -= item.Cantidad;
 
@@ -63,6 +63,16 @@ public class RegistrarVentaCommandHandler : IRequestHandler<RegistrarVentaComman
         };
 
         _context.Ventas.Add(venta);
+
+        _context.CajaMovimientos.Add(new CajaMovimiento
+        {
+            Fecha      = venta.Fecha,
+            Tipo       = "Ingreso",
+            MetodoPago = request.MetodoPago,
+            Monto      = total,
+            Concepto   = $"Venta #{venta.Id.ToString()[..8]}"
+        });
+
         await _context.SaveChangesAsync(cancellationToken);
 
         return venta.Id;

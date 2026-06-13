@@ -2,4 +2,4 @@ using MediatR;
 
 namespace JujuyERP.Application.Dashboard.Queries.ObtenerMetricasDashboard;
 
-public record ObtenerMetricasDashboardQuery : IRequest<MetricasDashboardDto>;
+public record ObtenerMetricasDashboardQuery(int RangoDias = 1) : IRequest<MetricasDashboardDto>;

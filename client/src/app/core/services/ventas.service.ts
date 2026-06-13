@@ -11,7 +11,7 @@ export class VentasService {
   private http = inject(HttpClient);
   private readonly API = 'http://localhost:5075/api/ventas';
 
-  registrarVenta(items: ItemVenta[]) {
-    return this.http.post<{ id: string }>(this.API, { items }, { observe: 'response' });
+  registrarVenta(items: ItemVenta[], metodoPago: string = 'Efectivo') {
+    return this.http.post<{ id: string }>(this.API, { items, metodoPago }, { observe: 'response' });
   }
 }

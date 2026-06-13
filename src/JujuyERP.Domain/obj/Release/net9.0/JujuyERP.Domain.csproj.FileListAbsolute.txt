@@ -1,0 +1,11 @@
+D:\JujuyERP\src\JujuyERP.Domain\bin\Release\net9.0\JujuyERP.Domain.deps.json
+D:\JujuyERP\src\JujuyERP.Domain\bin\Release\net9.0\JujuyERP.Domain.dll
+D:\JujuyERP\src\JujuyERP.Domain\bin\Release\net9.0\JujuyERP.Domain.pdb
+D:\JujuyERP\src\JujuyERP.Domain\obj\Release\net9.0\JujuyERP.Domain.GeneratedMSBuildEditorConfig.editorconfig
+D:\JujuyERP\src\JujuyERP.Domain\obj\Release\net9.0\JujuyERP.Domain.AssemblyInfoInputs.cache
+D:\JujuyERP\src\JujuyERP.Domain\obj\Release\net9.0\JujuyERP.Domain.AssemblyInfo.cs
+D:\JujuyERP\src\JujuyERP.Domain\obj\Release\net9.0\JujuyERP.Domain.csproj.CoreCompileInputs.cache
+D:\JujuyERP\src\JujuyERP.Domain\obj\Release\net9.0\JujuyERP.Domain.dll
+D:\JujuyERP\src\JujuyERP.Domain\obj\Release\net9.0\refint\JujuyERP.Domain.dll
+D:\JujuyERP\src\JujuyERP.Domain\obj\Release\net9.0\JujuyERP.Domain.pdb
+D:\JujuyERP\src\JujuyERP.Domain\obj\Release\net9.0\ref\JujuyERP.Domain.dll

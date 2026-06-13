@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("JujuyERP.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+38343298fd4e2fe0f848fdd1a0155174a7872e72")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+626daa9a0a97f2ceb87ad257d7097f959ddcc356")]
 [assembly: System.Reflection.AssemblyProductAttribute("JujuyERP.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("JujuyERP.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

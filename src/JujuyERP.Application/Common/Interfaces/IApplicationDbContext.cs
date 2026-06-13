@@ -19,6 +19,7 @@ public interface IApplicationDbContext
     DbSet<Usuario> Usuarios { get; }
     DbSet<Venta> Ventas { get; }
     DbSet<VentaDetalle> VentaDetalles { get; }
+    DbSet<CajaMovimiento> CajaMovimientos { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

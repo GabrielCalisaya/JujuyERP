@@ -3,6 +3,8 @@ import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { VentasService } from '../../core/services/ventas.service';
+
+type MetodoPago = 'Efectivo' | 'Debito' | 'Credito' | 'Transferencia';
 import { ToastService } from '../../core/services/toast.service';
 
 interface Producto {
@@ -210,12 +212,29 @@ interface UltimaVenta {
         </div>
 
         @if (carrito().length > 0) {
-          <div class="px-5 py-4 border-t border-white/[0.06] space-y-4">
-            <div class="flex items-baseline justify-between">
+          <div class="px-5 py-4 border-t border-white/[0.06] space-y-3">
+            <div class="flex items-baseline justify-between mb-1">
               <span class="text-[11px] font-semibold text-neutral-600 uppercase tracking-[0.12em]">Total</span>
               <span class="text-2xl font-black text-white tabular-nums">
                 {{ totalVenta() | currency:'ARS':'symbol':'1.0-0' }}
               </span>
+            </div>
+
+            <div>
+              <p class="text-[10px] font-semibold text-neutral-600 uppercase tracking-[0.1em] mb-1.5">Medio de pago</p>
+              <div class="grid grid-cols-4 gap-1">
+                @for (m of metodosPago; track m.val) {
+                  <button (click)="metodoPago.set(m.val)"
+                    class="flex flex-col items-center gap-1 py-2 rounded-xl text-[10px] font-semibold
+                           border transition-all duration-200"
+                    [class]="metodoPago() === m.val
+                      ? 'bg-indigo-500/[0.14] border-indigo-400/40 text-indigo-300'
+                      : 'bg-white/[0.03] border-white/[0.06] text-neutral-600 hover:border-white/[0.1] hover:text-neutral-400'">
+                    <span class="text-base">{{ m.icon }}</span>
+                    <span>{{ m.label }}</span>
+                  </button>
+                }
+              </div>
             </div>
 
             <button (click)="confirmarVenta()" [disabled]="confirmando()"
@@ -326,12 +345,20 @@ export class VentasComponent implements OnInit {
 
   private readonly API = 'http://localhost:5075/api/productos';
 
-  productos   = signal<Producto[]>([]);
-  cargando    = signal(true);
-  confirmando = signal(false);
-  ultimaVenta = signal<UltimaVenta | null>(null);
-  busqueda    = signal('');
-  carrito     = signal<ItemCarrito[]>([]);
+  productos    = signal<Producto[]>([]);
+  cargando     = signal(true);
+  confirmando  = signal(false);
+  ultimaVenta  = signal<UltimaVenta | null>(null);
+  busqueda     = signal('');
+  carrito      = signal<ItemCarrito[]>([]);
+  metodoPago   = signal<MetodoPago>('Efectivo');
+
+  readonly metodosPago: { val: MetodoPago; label: string; icon: string }[] = [
+    { val: 'Efectivo',      label: 'Efectivo',     icon: '💵' },
+    { val: 'Debito',        label: 'Débito',        icon: '💳' },
+    { val: 'Credito',       label: 'Crédito',       icon: '🏦' },
+    { val: 'Transferencia', label: 'Transferencia', icon: '📲' },
+  ];
 
   productosFiltrados = computed(() => {
     const q = this.busqueda().toLowerCase().trim();
@@ -398,7 +425,7 @@ export class VentasComponent implements OnInit {
 
     const items = this.carrito().map(i => ({ productoId: i.productoId, cantidad: i.cantidad }));
 
-    this.ventasService.registrarVenta(items).subscribe({
+    this.ventasService.registrarVenta(items, this.metodoPago()).subscribe({
       next: () => {
         const venta: UltimaVenta = {
           fecha: new Date(),

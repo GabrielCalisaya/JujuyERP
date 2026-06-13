@@ -13,17 +13,12 @@ public class DashboardController : ControllerBase
 {
     private readonly ISender _mediator;
 
-    public DashboardController(ISender mediator)
-    {
-        _mediator = mediator;
-    }
+    public DashboardController(ISender mediator) => _mediator = mediator;
 
     [HttpGet("metricas")]
     [ProducesResponseType(typeof(MetricasDashboardDto), StatusCodes.Status200OK)]
     public async Task<ActionResult<MetricasDashboardDto>> ObtenerMetricas(
-        CancellationToken cancellationToken)
-    {
-        var metricas = await _mediator.Send(new ObtenerMetricasDashboardQuery(), cancellationToken);
-        return Ok(metricas);
-    }
+        [FromQuery] int rangoDias = 1,
+        CancellationToken cancellationToken = default)
+        => Ok(await _mediator.Send(new ObtenerMetricasDashboardQuery(rangoDias), cancellationToken));
 }

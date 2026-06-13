@@ -1,0 +1,15 @@
+D:\JujuyERP\src\JujuyERP.Application\bin\Release\net9.0\JujuyERP.Application.deps.json
+D:\JujuyERP\src\JujuyERP.Application\bin\Release\net9.0\JujuyERP.Application.dll
+D:\JujuyERP\src\JujuyERP.Application\bin\Release\net9.0\JujuyERP.Application.pdb
+D:\JujuyERP\src\JujuyERP.Application\bin\Release\net9.0\JujuyERP.Domain.dll
+D:\JujuyERP\src\JujuyERP.Application\bin\Release\net9.0\JujuyERP.Domain.pdb
+D:\JujuyERP\src\JujuyERP.Application\obj\Release\net9.0\JujuyERP.Application.csproj.AssemblyReference.cache
+D:\JujuyERP\src\JujuyERP.Application\obj\Release\net9.0\JujuyERP.Application.GeneratedMSBuildEditorConfig.editorconfig
+D:\JujuyERP\src\JujuyERP.Application\obj\Release\net9.0\JujuyERP.Application.AssemblyInfoInputs.cache
+D:\JujuyERP\src\JujuyERP.Application\obj\Release\net9.0\JujuyERP.Application.AssemblyInfo.cs
+D:\JujuyERP\src\JujuyERP.Application\obj\Release\net9.0\JujuyERP.Application.csproj.CoreCompileInputs.cache
+D:\JujuyERP\src\JujuyERP.Application\obj\Release\net9.0\JujuyERP.66224FDE.Up2Date
+D:\JujuyERP\src\JujuyERP.Application\obj\Release\net9.0\JujuyERP.Application.dll
+D:\JujuyERP\src\JujuyERP.Application\obj\Release\net9.0\refint\JujuyERP.Application.dll
+D:\JujuyERP\src\JujuyERP.Application\obj\Release\net9.0\JujuyERP.Application.pdb
+D:\JujuyERP\src\JujuyERP.Application\obj\Release\net9.0\ref\JujuyERP.Application.dll

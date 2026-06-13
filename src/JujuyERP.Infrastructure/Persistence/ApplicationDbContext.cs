@@ -23,6 +23,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<Usuario> Usuarios => Set<Usuario>();
     public DbSet<Venta> Ventas => Set<Venta>();
     public DbSet<VentaDetalle> VentaDetalles => Set<VentaDetalle>();
+    public DbSet<CajaMovimiento> CajaMovimientos => Set<CajaMovimiento>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

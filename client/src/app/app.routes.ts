@@ -37,5 +37,11 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/ventas/historial/historial-ventas.component').then(m => m.HistorialVentasComponent)
   },
+  {
+    path: 'finanzas/caja',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/finanzas/caja/caja.component').then(m => m.CajaComponent)
+  },
   { path: '**', redirectTo: 'auth/login' }
 ];
