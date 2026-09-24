@@ -1,0 +1,19 @@
+# .NET build output
+[Bb]in/
+[Oo]bj/
+
+# Local databases
+*.db
+*.db-shm
+*.db-wal
+
+# Angular and Node.js
+client/node_modules/
+client/dist/
+client/.angular/
+
+# Local settings and IDE files
+appsettings.Development.json
+.vs/
+.idea/
+.vscode/
