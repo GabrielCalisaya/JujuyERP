@@ -17,3 +17,4 @@ appsettings.Development.json
 .vs/
 .idea/
 .vscode/
+.cursor/
